@@ -33,49 +33,32 @@ contract Withdrawal is Test {
     }
 
     function testWithdrawal() public {
-        //vm.recordLogs();
-
         uint256 vegaBalanceOfMultisigWalletBefore = vegaToken.balanceOf(multisigWallet_Address);
 
-//        uint256 tranche_3_balance = erc20_Vesting.get_tranche_balance(multisigWallet_Address, 3);
-//        emit log_uint(tranche_3_balance);
-//
-//        uint256 tranche_8_balance = erc20_Vesting.get_tranche_balance(multisigWallet_Address, 8);
-//        emit log_uint(tranche_8_balance);
-//
-//        uint256 vested_for_tranche_3 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 3);
-//        emit log_uint(vested_for_tranche_3);
-//
+        uint256 vested_for_tranche_3 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 3);
         uint256 vested_for_tranche_8 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 8);
-        emit log_uint(vested_for_tranche_8);
 
-        //bytes memory data3 = abi.encodeWithSelector(erc20_Vesting.user_total_all_tranches.selector, multisigWallet_Address);
+        uint256 totalVested = vested_for_tranche_3 + vested_for_tranche_8;
 
-        bytes memory data3 = hex"bc6d385d0000000000000000000000000000000000000000000000000000000000000008";
+        bytes memory remove_stake = abi.encodeWithSelector(erc20_Vesting.remove_stake.selector, totalVested, vega_public_key);
+        bytes memory withdraw_from_tranch_3 = abi.encodeWithSelector(erc20_Vesting.withdraw_from_tranche.selector, uint8(3));
+        bytes memory withdraw_from_tranch_8 = abi.encodeWithSelector(erc20_Vesting.withdraw_from_tranche.selector, uint8(8));
 
-//        uint txCount = multisig.getTransactionCount(true, true);
-//
-//        cheats.startPrank(account2);
-//        multisig.submitTransaction(ERC20_Vesting_Address, 0, data3);
-//        cheats.stopPrank();
-//
-//        cheats.startPrank(account1);
-//        multisig.confirmTransaction{gas: 200000}(txCount);
-//        cheats.stopPrank();
+        uint txCount = multisig.getTransactionCount(true, true);
 
+        cheats.startPrank(account2);
+        multisig.submitTransaction(ERC20_Vesting_Address, 0, remove_stake);
+        multisig.submitTransaction(ERC20_Vesting_Address, 0, withdraw_from_tranch_3);
+        multisig.submitTransaction(ERC20_Vesting_Address, 0, withdraw_from_tranch_8);
+        cheats.stopPrank();
 
-        cheats.startPrank(multisigWallet_Address);
-        erc20_Vesting.remove_stake(vested_for_tranche_8, vega_public_key);
-
-        erc20_Vesting.withdraw_from_tranche(8);
-//        erc20_Vesting.withdraw_from_tranche(8);
+        cheats.startPrank(account1);
+        multisig.confirmTransaction(txCount);
+        multisig.confirmTransaction(txCount + 1);
+        multisig.confirmTransaction(txCount + 2);
+        cheats.stopPrank();
 
         uint256 vegaBalanceOfMultisigWalletAfter = vegaToken.balanceOf(multisigWallet_Address);
-
         emit log_uint(vegaBalanceOfMultisigWalletAfter - vegaBalanceOfMultisigWalletBefore);
-
-//        Vm.Log[] memory withdrawLogs = vm.getRecordedLogs();
-//        assertEq(withdrawLogs.length, 1);
-//        assertEq(withdrawLogs[0].topics[0], keccak256("Withdrawn(uint256,uint256)"));
     }
 }
