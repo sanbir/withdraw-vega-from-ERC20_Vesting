@@ -18,6 +18,8 @@ contract Withdrawal is Test {
     address constant public account1 = 0xF5EFD4E7ebe4203d3Ee592AA058809d0Ae613aCA;
     address constant public account2 = 0xaeF7d07F5aDC3084D43963009CCD67C6C68aea64;
 
+    bytes32 constant public vega_public_key = hex"7A542A71397AEEFB4CBEAF5CDD565D475CBC87C63EB469C95497A5A6C2874797";
+
     Vm cheats = Vm(HEVM_ADDRESS);
 
     ERC20_Vesting public erc20_Vesting;
@@ -44,23 +46,28 @@ contract Withdrawal is Test {
 //        uint256 vested_for_tranche_3 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 3);
 //        emit log_uint(vested_for_tranche_3);
 //
-//        uint256 vested_for_tranche_8 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 8);
-//        emit log_uint(vested_for_tranche_8);
+        uint256 vested_for_tranche_8 = erc20_Vesting.get_vested_for_tranche(multisigWallet_Address, 8);
+        emit log_uint(vested_for_tranche_8);
 
-        bytes memory data3 = abi.encodeWithSelector(erc20_Vesting.withdraw_from_tranche.selector, uint8(3));
+        //bytes memory data3 = abi.encodeWithSelector(erc20_Vesting.user_total_all_tranches.selector, multisigWallet_Address);
 
-        uint txCount = multisig.getTransactionCount(true, true);
+        bytes memory data3 = hex"bc6d385d0000000000000000000000000000000000000000000000000000000000000008";
 
-        cheats.startPrank(account1);
-        multisig.submitTransaction(ERC20_Vesting_Address, 0, data3);
-        cheats.stopPrank();
+//        uint txCount = multisig.getTransactionCount(true, true);
+//
+//        cheats.startPrank(account2);
+//        multisig.submitTransaction(ERC20_Vesting_Address, 0, data3);
+//        cheats.stopPrank();
+//
+//        cheats.startPrank(account1);
+//        multisig.confirmTransaction{gas: 200000}(txCount);
+//        cheats.stopPrank();
 
-        cheats.startPrank(account2);
-        multisig.confirmTransaction(txCount);
-        cheats.stopPrank();
 
+        cheats.startPrank(multisigWallet_Address);
+        erc20_Vesting.remove_stake(vested_for_tranche_8, vega_public_key);
 
-//        erc20_Vesting.withdraw_from_tranche(3);
+        erc20_Vesting.withdraw_from_tranche(8);
 //        erc20_Vesting.withdraw_from_tranche(8);
 
         uint256 vegaBalanceOfMultisigWalletAfter = vegaToken.balanceOf(multisigWallet_Address);
